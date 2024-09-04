@@ -29,6 +29,8 @@ def download_one_file_of_raw_data(year: int, month: int) -> Path:
         return path
     else:
         raise Exception(f'{URL} is not available')
+    
+
 
 # make sure the dates are correct as we did in 01_load_and...
 def validate_raw_data(
@@ -104,7 +106,7 @@ def load_raw_data(
         # validate the file
         rides_one_month = validate_raw_data(rides_one_month, year, month)
 
-        # append to existing data - rides starts as empty df
+        # append to existing data - rides starts off as empty df
         rides = pd.concat([rides, rides_one_month])
 
     if rides.empty:
