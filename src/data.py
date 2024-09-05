@@ -1,6 +1,3 @@
-# functions for data processing
-
-# add dependencies
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
@@ -13,7 +10,7 @@ from tqdm import tqdm
 
 from src.paths import RAW_DATA_DIR, TRANSFORMED_DATA_DIR
 
-# function from 01_load_and_validate_raw_data.ipynb
+
 def download_one_file_of_raw_data(year: int, month: int) -> Path:
     """
     Downloads Parquet file with historical taxi rides for the given `year` and
@@ -23,16 +20,13 @@ def download_one_file_of_raw_data(year: int, month: int) -> Path:
     response = requests.get(URL)
 
     if response.status_code == 200:
-        # add to RAW_DATA_DIR
         path = RAW_DATA_DIR / f'rides_{year}-{month:02d}.parquet'
         open(path, "wb").write(response.content)
         return path
     else:
         raise Exception(f'{URL} is not available')
-    
 
 
-# make sure the dates are correct as we did in 01_load_and...
 def validate_raw_data(
     rides: pd.DataFrame,
     year: int,
@@ -49,7 +43,42 @@ def validate_raw_data(
     
     return rides
 
-# process several files at once 
+
+def fetch_ride_events_from_data_warehouse(
+    from_date: datetime,
+    to_date: datetime
+) -> pd.DataFrame:
+    """
+    This function is used to simulate production data by sampling historical data
+    from 52 weeks ago (i.e. 1 year)
+    """
+    from_date_ = from_date - timedelta(days=7*52)
+    to_date_ = to_date - timedelta(days=7*52)
+    print(f'Fetching ride events from {from_date} to {to_date}')
+
+    if (from_date_.year == to_date_.year) and (from_date_.month == to_date_.month):
+        # download 1 file of data only
+        rides = load_raw_data(year=from_date_.year, months=from_date_.month)
+        rides = rides[rides.pickup_datetime >= from_date_]
+        rides = rides[rides.pickup_datetime < to_date_]
+
+    else:
+        # download 2 files from website
+        rides = load_raw_data(year=from_date_.year, months=from_date_.month)
+        rides = rides[rides.pickup_datetime >= from_date_]
+        rides_2 = load_raw_data(year=to_date_.year, months=to_date_.month)
+        rides_2 = rides_2[rides_2.pickup_datetime < to_date_]
+        rides = pd.concat([rides, rides_2])
+
+    # shift the pickup_datetime back 1 year ahead, to simulate production data
+    # using its 7*52-days-ago value
+    rides['pickup_datetime'] += timedelta(days=7*52)
+
+    rides.sort_values(by=['pickup_location_id', 'pickup_datetime'], inplace=True)
+
+    return rides
+
+
 def load_raw_data(
     year: int,
     months: Optional[List[int]] = None
@@ -77,10 +106,8 @@ def load_raw_data(
         months = [months]
 
     for month in months:
-        # if the file is already there do not download
+        
         local_file = RAW_DATA_DIR / f'rides_{year}-{month:02d}.parquet'
-
-        # if the file does not exist...
         if not local_file.exists():
             try:
                 # download the file from the NYC website
@@ -88,7 +115,6 @@ def load_raw_data(
                 download_one_file_of_raw_data(year, month)
             except:
                 print(f'{year}-{month:02d} file is not available')
-                # go to next month in months
                 continue
         else:
             print(f'File {year}-{month:02d} was already in local storage') 
@@ -106,7 +132,7 @@ def load_raw_data(
         # validate the file
         rides_one_month = validate_raw_data(rides_one_month, year, month)
 
-        # append to existing data - rides starts off as empty df
+        # append to existing data
         rides = pd.concat([rides, rides_one_month])
 
     if rides.empty:
@@ -116,10 +142,8 @@ def load_raw_data(
         # keep only time and origin of the ride
         rides = rides[['pickup_datetime', 'pickup_location_id']]
         return rides
-    
 
-# function from 02_transform_raw_data_into_ts_data.ipynb
-# add 0s if a location id has no rides 
+
 def add_missing_slots(ts_data: pd.DataFrame) -> pd.DataFrame:
     """
     Add necessary rows to the input 'ts_data' to make sure the output
@@ -160,24 +184,22 @@ def add_missing_slots(ts_data: pd.DataFrame) -> pd.DataFrame:
     
     return output
 
-# similar process from 02_transform_raw_data... make it a function 
+
 def transform_raw_data_into_ts_data(
     rides: pd.DataFrame
 ) -> pd.DataFrame:
     """"""
     # sum rides per location and pickup_hour
     rides['pickup_hour'] = rides['pickup_datetime'].dt.floor('h')
-    # .size() creates a column called 0 that has count of rides per hour per location id
     agg_rides = rides.groupby(['pickup_hour', 'pickup_location_id']).size().reset_index()
     agg_rides.rename(columns={0: 'rides'}, inplace=True)
 
-    # add rows for (locations, pickup_hours) with 0 rides
+    # add rows for (locations, pickup_hours)s with 0 rides
     agg_rides_all_slots = add_missing_slots(agg_rides)
 
     return agg_rides_all_slots
 
 
-# function from 03_transform_raw_data_into_features_and_targets.ipynb
 def transform_ts_data_into_features_and_target(
     ts_data: pd.DataFrame,
     input_seq_len: int,
@@ -207,15 +229,24 @@ def transform_ts_data_into_features_and_target(
             input_seq_len,
             step_size
         )
-
-        # slice and transpose data into numpy arrays for features and targets
+        # rows are the length of all sliced indices (list created above) and columns are the numbers of features
         n_examples = len(indices)
-        x = np.ndarray(shape=(n_examples, input_seq_len), dtype=np.float32)
+
+        # x is the first two numbers in our indices and y is just the length of the indices list
+        x = np.ndarray(shape=(n_examples, input_seq_len), dtype=np.float32) 
         y = np.ndarray(shape=(n_examples), dtype=np.float32)
         pickup_hours = []
+
+        # i is the index and idx is the element. The element is a tuple so idx[0] is the first number of the tuple
         for i, idx in enumerate(indices):
+
+            # x is assigned the rides value at the indices the loop is currently at 
             x[i, :] = ts_data_one_location.iloc[idx[0]:idx[1]]['rides'].values
-            y[i] = ts_data_one_location.iloc[idx[1]:idx[2]]['rides'].values[0]
+
+            # idx[1] is the target variable in the tuple since iloc is exclusive to ending index (24th index is target)
+            y[i] = ts_data_one_location.iloc[idx[1]:idx[2]]['rides'].values       
+
+            # keep trach of pickup hours  
             pickup_hours.append(ts_data_one_location.iloc[idx[1]]['pickup_hour'])
 
         # numpy -> pandas
@@ -239,24 +270,28 @@ def transform_ts_data_into_features_and_target(
     return features, targets['target_rides_next_hour']
 
 
-def get_cutoff_indices_features_and_target(
-    data: pd.DataFrame,
-    input_seq_len: int,
-    step_size: int
-    ) -> list:
+# cutoff indices function
+def get_cutoff_indices_features_and_target(data = pd.DataFrame, n_features = int, step_size = int) -> list:
+    stop_position = len(data) - 1
 
-        stop_position = len(data) - 1
-        
-        # Start the first sub-sequence at index position 0
-        subseq_first_idx = 0
-        subseq_mid_idx = input_seq_len
-        subseq_last_idx = input_seq_len + 1
-        indices = []
-        
-        while subseq_last_idx <= stop_position:
+    # start at 0th index - first feature
+    subseq_first_idx = 0
+    # last feature before target var
+    subseq_mid_idx = n_features
+    # this is the target
+    subseq_last_idx = n_features + 1
+    # empty list
+    indices = []
+
+    # continue this process for all data filling the empty list
+    while subseq_last_idx <= stop_position:
+            
+            # add the three indices to our list
             indices.append((subseq_first_idx, subseq_mid_idx, subseq_last_idx))
+            
+            # our step size will be one so we add one to each
             subseq_first_idx += step_size
             subseq_mid_idx += step_size
             subseq_last_idx += step_size
 
-        return indices
+    return indices

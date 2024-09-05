@@ -24,7 +24,7 @@ def plot_one_sample(
     ts_dates = pd.date_range(
         features_['pickup_hour'] - timedelta(hours=len(ts_columns)),
         features_['pickup_hour'],
-        freq='H'
+        freq='h'
     )
     
     # line plot with past values
