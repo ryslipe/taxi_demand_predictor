@@ -1,3 +1,5 @@
+# this .py file contains a pipeline with our model and hyperparams
+# along with the FunctionTransformer and CustomTransformer used. 
 import pandas as pd
 import lightgbm as lgb
 
@@ -33,7 +35,7 @@ class TemporalFeatures(BaseEstimator, TransformerMixin):
 def get_pipeline(**hyperparams) -> Pipeline:
     '''Function to access the pipeline'''
     # function transformer initializer
-    add_average_rides_last_4_weeks = FunctionTransformer(add_average_rides_last_4_weeks,
+    add_average_rides_last_4_weeks = FunctionTransformer(average_rides_last_4_weeks,
                                                          validate=False)
     
     # adding temporal features to pipeline
@@ -46,4 +48,3 @@ def get_pipeline(**hyperparams) -> Pipeline:
         lgb.LGBMRegressor(**hyperparams)
     )
 
-    
