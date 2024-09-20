@@ -11,7 +11,7 @@ def plot_one_sample(
     predictions: Optional[pd.Series] = None,
     display_title: Optional[bool] = True,
 ):
-    """"""
+    """Plot one row of data."""
     features_ = features.iloc[example_id]
     
     if targets is not None:
