@@ -6,10 +6,10 @@ authors = ["Ryan Slipe <rslipe@my.gcu.edu>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.9,<3.9.7 || >3.9.7,<3.11"
 jupyter = "^1.0.0"
 requests = "^2.32.3"
-pandas = "^2.2.2"
+pandas = "^1.5.2"
 fastparquet = "^2024.5.0"
 pyarrow = "^17.0.0"
 tqdm = "^4.66.5"
@@ -19,6 +19,8 @@ xgboost = "^2.1.1"
 lightgbm = "^4.5.0"
 optuna = "^4.0.0"
 python-dotenv = "^1.0.1"
+hsfs = "3.4.2"
+hopsworks = "3.4.2"
 
 
 [build-system]
