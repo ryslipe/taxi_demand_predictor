@@ -37,9 +37,13 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
 
     - name: 'Execute python workflows'
-    env:
-      HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY  }}
-    run: poetry run jupyter nbconvert --to notebook --execute notebooks/12_feature_pipeline.ipynb
+      env:
+        HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY  }}
+      run: poetry run jupyter nbconvert --to notebook --execute notebooks/12_feature_pipeline.ipynb
+
+
+
+
 
 
 
