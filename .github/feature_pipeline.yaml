@@ -1,0 +1,45 @@
+# name of the workflow
+name: 'hourly-taxi-demand-feature-pipeline'
+
+# automate the notebook to run every hour
+on:
+  schedule:
+    -cron: '0 * * * *'
+  # can also be automated manually using this code
+  workflow_dispatch: 
+
+# define the steps to run the feature pipeline notebook
+jobs:
+  # define the name of the job
+  feature_pipeline:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    # go through our repository
+    -name: Checkout
+      uses: actions/checkout@v3
+
+    # set up python
+    -name: Setup Python 3.10.9
+      uses: actions/setup-python@v4
+      with: 
+        python-version: '3.10.9'
+
+    # the automation will need to install poetry
+    -name: Install Poetry
+      uses: snok/install-poetry@v1
+
+    # install the dependencies
+    -name: Install Dependencies
+    # installs the dependencies in the pyproject.toml file
+      run: poetry install
+      if: steps.cache.outputs.cache-hit != 'true'
+
+    -name: 'Execute python workflows'
+    env:
+      HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY  }}
+    run: poetry run jupyter nbconvert --to notebook --execute notebooks/12_feature_pipeline.ipynb
+
+
+
