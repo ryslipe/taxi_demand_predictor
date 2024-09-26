@@ -229,24 +229,15 @@ def transform_ts_data_into_features_and_target(
             input_seq_len,
             step_size
         )
-        # rows are the length of all sliced indices (list created above) and columns are the numbers of features
-        n_examples = len(indices)
 
-        # x is the first two numbers in our indices and y is just the length of the indices list
-        x = np.ndarray(shape=(n_examples, input_seq_len), dtype=np.float32) 
+        # slice and transpose data into numpy arrays for features and targets
+        n_examples = len(indices)
+        x = np.ndarray(shape=(n_examples, input_seq_len), dtype=np.float32)
         y = np.ndarray(shape=(n_examples), dtype=np.float32)
         pickup_hours = []
-
-        # i is the index and idx is the element. The element is a tuple so idx[0] is the first number of the tuple
         for i, idx in enumerate(indices):
-
-            # x is assigned the rides value at the indices the loop is currently at 
             x[i, :] = ts_data_one_location.iloc[idx[0]:idx[1]]['rides'].values
-
-            # idx[1] is the target variable in the tuple since iloc is exclusive to ending index (24th index is target)
-            y[i] = ts_data_one_location.iloc[idx[1]:idx[2]]['rides'].values       
-
-            # keep trach of pickup hours  
+            y[i] = ts_data_one_location.iloc[idx[1]:idx[2]]['rides'].values.item(0)
             pickup_hours.append(ts_data_one_location.iloc[idx[1]]['pickup_hour'])
 
         # numpy -> pandas
