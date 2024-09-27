@@ -211,6 +211,7 @@ def transform_ts_data_into_features_and_target(
     """
     assert set(ts_data.columns) == {'pickup_hour', 'rides', 'pickup_location_id'}
 
+    # use the location ids to loop through each location individually
     location_ids = ts_data['pickup_location_id'].unique()
     features = pd.DataFrame()
     targets = pd.DataFrame()
