@@ -1,6 +1,7 @@
 # where is the data?
 # where is the raw data?
 # where is the transformed data?
+# where is the model?
 
 from pathlib import Path
 import os
