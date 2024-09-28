@@ -6,7 +6,7 @@ import hopsworks
 import hopsworks.project
 from hsfs.feature_store import FeatureStore
 import pandas as pd
-import numpy
+import numpy as np
 
 # function to connect to our project 
 def get_hopsworks_project() -> hopsworks.project.Project:
