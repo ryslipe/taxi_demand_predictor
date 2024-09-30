@@ -36,7 +36,7 @@ def get_model_predictions(model, features) -> pd.DataFrame:
 
     return results
 
-
+# our data is three columns so have to transpose it
 def load_batch_of_features_from_store(
     current_date: pd.Timestamp,    
 ) -> pd.DataFrame:
@@ -87,6 +87,7 @@ def load_batch_of_features_from_store(
         "Time-series data is not complete. Make sure your feature pipeline is up and runnning."
 
     # transpose time-series data as a feature vector, for each `pickup_location_id`
+    # data in feature group has pickup_id pickup_hour and rides columns
     x = np.ndarray(shape=(len(location_ids), n_features), dtype=np.float32)
     for i, location_id in enumerate(location_ids):
         ts_data_i = ts_data.loc[ts_data.pickup_location_id == location_id, :]
@@ -103,4 +104,24 @@ def load_batch_of_features_from_store(
     features.sort_values(by=['pickup_location_id'], inplace=True)
 
     return features
+
+# get our model
+def load_model_from_registry():
+    import joblib
+    from pathlib import Path
+
+    project = get_hopsworks_project()
+    model_registry = project.get_model_registry()
+
+    model = model_registry.get_model(
+        name = config.MODEL_NAME,
+        version= config.MODEL_VERSION
+    )
+
+    # download from remote to local directory
+    model_dir = model.download()
+    # load the model
+    model = joblib.load(Path(model_dir) / 'model.pkl')
+
+    return model
     
