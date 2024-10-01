@@ -64,7 +64,7 @@ def load_batch_of_features_from_store(
     # access feature view
     feature_view = feature_store.get_feature_view(
         name=config.FEATURE_VIEW_NAME,
-        version=config.FEATURE_VIEW_VERSION
+        version=2
     )
     # get a batch of data from the feature_view
     ts_data = feature_view.get_batch_data(
@@ -76,7 +76,7 @@ def load_batch_of_features_from_store(
     # filter data to the time period we are interested in
     pickup_ts_from = int(fetch_data_from.timestamp() * 1000)
     pickup_ts_to = int(fetch_data_to.timestamp() * 1000)
-    ts_data = ts_data[ts_data.pickup_ts.between(pickup_ts_from, pickup_ts_to)]
+    ts_data = ts_data[ts_data['pickup_ts'].between(pickup_ts_from, pickup_ts_to)]
 
     # sort data by location and time
     ts_data.sort_values(by=['pickup_location_id', 'pickup_hour'], inplace=True)
@@ -87,7 +87,7 @@ def load_batch_of_features_from_store(
         "Time-series data is not complete. Make sure your feature pipeline is up and runnning."
 
     # transpose time-series data as a feature vector, for each `pickup_location_id`
-    # data in feature group has pickup_id pickup_hour and rides columns
+    # data in feature group has pickup_id pickup_hour and rides
     x = np.ndarray(shape=(len(location_ids), n_features), dtype=np.float32)
     for i, location_id in enumerate(location_ids):
         ts_data_i = ts_data.loc[ts_data.pickup_location_id == location_id, :]
