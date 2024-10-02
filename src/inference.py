@@ -31,7 +31,7 @@ def get_model_predictions(model, features) -> pd.DataFrame:
     # dataframe creation
     results = pd.DataFrame()
     # convert to numpy array using .values()
-    results['pickup_location_id'] = features['pickup_location_id'].values()
+    results['pickup_location_id'] = features['pickup_location_id'].values
     results['predicted_demand'] = predictions.round()
 
     return results
