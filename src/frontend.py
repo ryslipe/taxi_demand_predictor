@@ -75,12 +75,15 @@ with st.spinner(text='Downloading the shape file to plot taxi zones...'):
     st.sidebar.write('✅ Shape file was downloaded.')
     progress_bar.progress(1/N_STEPS)
 
+
 # access the feature store for most recent batch of data from github ations
 with st.spinner(text='Downloading recent batch of data...'):
     features = load_batch_of_features_from_store(current_date)
     st.sidebar.write('✅ Batch of data downloaded.')
     progress_bar.progress(2/N_STEPS)
     print(f'{features}')
+
+
 
 # load the model from the model registry
 with st.spinner(text='Loading model registry...'):
