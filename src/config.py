@@ -3,26 +3,20 @@ from dotenv import load_dotenv
 
 from src.paths import PARENT_DIR
 
-# load the variable from the .env file
+# load key-value pairs from .env file located in the parent directory
 load_dotenv(PARENT_DIR / '.env')
 
-# project name
 HOPSWORKS_PROJECT_NAME = 'taxi_demand_rs'
 
-# try to get the api key and if there is no ap key created, tell us
 try:
-    # note the [], not () after os.environ
+    # HOPSWORKS_PROJECT_NAME = os.environ['HOPSWORKS_PROJECT_NAME']
     HOPSWORKS_API_KEY = os.environ['HOPSWORKS_API_KEY']
 except:
-    print('Create .env file in PARENT_DIR with API key named HOPSWORKS_API_KEY.')
+    raise Exception(
+        'Create an .env file on the project root with the HOPSWORKS_API_KEY'
+    )
 
+# feature group data
 FEATURE_GROUP_NAME = 'time_series_hourly_feature_group'
-FEATURE_GROUP_VERSION = 4
+FEATURE_GROUP_VERSION = 1
 
-FEATURE_VIEW_NAME = 'time_series_hourly_feature_view'
-FEATURE_VIEW_VERSION = 1
-
-N_FEATURES = 24 * 28
-
-MODEL_NAME = 'taxi_demand_predictor_next_hour'
-MODEL_VERSION = 1
