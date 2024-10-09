@@ -190,7 +190,7 @@ def transform_raw_data_into_ts_data(
 ) -> pd.DataFrame:
     """"""
     # sum rides per location and pickup_hour
-    rides['pickup_hour'] = rides['pickup_datetime'].dt.floor('h')
+    rides['pickup_hour'] = rides['pickup_datetime'].dt.floor('H')
     agg_rides = rides.groupby(['pickup_hour', 'pickup_location_id']).size().reset_index()
     agg_rides.rename(columns={0: 'rides'}, inplace=True)
 
@@ -211,7 +211,6 @@ def transform_ts_data_into_features_and_target(
     """
     assert set(ts_data.columns) == {'pickup_hour', 'rides', 'pickup_location_id'}
 
-    # use the location ids to loop through each location individually
     location_ids = ts_data['pickup_location_id'].unique()
     features = pd.DataFrame()
     targets = pd.DataFrame()
@@ -238,7 +237,7 @@ def transform_ts_data_into_features_and_target(
         pickup_hours = []
         for i, idx in enumerate(indices):
             x[i, :] = ts_data_one_location.iloc[idx[0]:idx[1]]['rides'].values
-            y[i] = ts_data_one_location.iloc[idx[1]:idx[2]]['rides'].values.item(0)
+            y[i] = ts_data_one_location.iloc[idx[1]:idx[2]]['rides'].values[0]
             pickup_hours.append(ts_data_one_location.iloc[idx[1]]['pickup_hour'])
 
         # numpy -> pandas
@@ -262,28 +261,24 @@ def transform_ts_data_into_features_and_target(
     return features, targets['target_rides_next_hour']
 
 
-# cutoff indices function
-def get_cutoff_indices_features_and_target(data = pd.DataFrame, n_features = int, step_size = int) -> list:
-    stop_position = len(data) - 1
+def get_cutoff_indices_features_and_target(
+    data: pd.DataFrame,
+    input_seq_len: int,
+    step_size: int
+    ) -> list:
 
-    # start at 0th index - first feature
-    subseq_first_idx = 0
-    # last feature before target var
-    subseq_mid_idx = n_features
-    # this is the target
-    subseq_last_idx = n_features + 1
-    # empty list
-    indices = []
-
-    # continue this process for all data filling the empty list
-    while subseq_last_idx <= stop_position:
-            
-            # add the three indices to our list
+        stop_position = len(data) - 1
+        
+        # Start the first sub-sequence at index position 0
+        subseq_first_idx = 0
+        subseq_mid_idx = input_seq_len
+        subseq_last_idx = input_seq_len + 1
+        indices = []
+        
+        while subseq_last_idx <= stop_position:
             indices.append((subseq_first_idx, subseq_mid_idx, subseq_last_idx))
-            
-            # our step size will be one so we add one to each
             subseq_first_idx += step_size
             subseq_mid_idx += step_size
             subseq_last_idx += step_size
 
-    return indices
+        return indices
