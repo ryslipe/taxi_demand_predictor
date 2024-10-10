@@ -18,15 +18,15 @@ def get_hopsworks_project() -> hopsworks.project.Project:
 # get our feature store
 def get_feature_store() -> FeatureStore:
     project = get_hopsworks_project()
-    return project.feature_store()
+    return project.get_feature_store()
 
 # get our model
 def get_model_predictions(model, features: pd.DataFrame) -> pd.DataFrame:
     '''Generate Predictions based on recent batch of features.'''
     predictions = model.predict(features)
 
-    results = pd.DataFrame
-    results['pickup_location_id'] = features['pickup_location_id'].values
+    results = pd.DataFrame()
+    results['pickup_location_id'] = features['pickup_location_id']
     results['predicted_demand'] = predictions.round(0)
 
     return results
