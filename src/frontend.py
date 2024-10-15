@@ -36,6 +36,8 @@ progress_bar = st.sidebar.progress(0)
 # useful when steps are completed
 N_STEPS = 7
 
+
+
 def load_shape_data_file() -> gpd.geodataframe.GeoDataFrame:
     """
     Fetches remote file with shape data, that we later use to plot the
@@ -81,6 +83,7 @@ st.write(geo_df)
 with st.spinner(text='Fetching recent batch of data.'):
     # loads a month of data up til last hour
     features = load_batch_of_features_from_store(current_date)
+    
     st.sidebar.write('✅ Features received.')
     progress_bar.progress(2/N_STEPS)
 
@@ -171,7 +174,7 @@ with st.spinner(text="Generating NYC Map"):
 
     with st.spinner(text="Plotting time-series data"):
         predictions_df = df
-        row_indices = np.argsort(predictions_df['predicted_demand'].values)
+        row_indices = np.argsort(predictions_df['predicted_demand'].values)[::-1]
         n_to_plot = 15
 
         for row_id in row_indices[:n_to_plot]:
