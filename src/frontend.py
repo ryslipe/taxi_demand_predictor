@@ -74,9 +74,9 @@ with st.spinner(text="Downloading shape file to plot taxi zones"):
     st.sidebar.write('✅ Shape file was downloaded ')
     progress_bar.progress(1/N_STEPS)
 
-st.write('This is the shape file that will be used for \
-         graphing the locations and getting the location name.')
-st.write(geo_df)
+#st.write('This is the shape file that will be used for \
+         #graphing the locations and getting the location name.')
+#st.write(geo_df)
 
 
 # connect to feature store for most recent batch of features
@@ -87,8 +87,8 @@ with st.spinner(text='Fetching recent batch of data.'):
     st.sidebar.write('✅ Features received.')
     progress_bar.progress(2/N_STEPS)
 
-st.write('These are the current features')
-st.write(features)
+#st.write('These are the current features')
+#st.write(features)
 
 
 # load the model from the model registry
@@ -97,8 +97,8 @@ with st.spinner(text = 'Loading the model from model registry'):
     st.sidebar.write('✅ The model has been loaded.')
     progress_bar.progress(3/N_STEPS)
 
-st.write('These are some details about how our model works.')
-st.write(model)
+#st.write('These are some details about how our model works.')
+#st.write(model)
 
 
 # get predictions
@@ -107,8 +107,8 @@ with st.spinner(text = 'Generating model predictions'):
     st.sidebar.write('✅ Predictions have been generated.')
     progress_bar.progress(4/N_STEPS)
 
-st.write('Here are the predictions.')
-st.write(results)
+#st.write('Here are the predictions.')
+#st.write(results)
 
 with st.spinner(text="Preparing data to plot"):
 
@@ -133,6 +133,9 @@ with st.spinner(text="Preparing data to plot"):
     max_pred, min_pred = df['color_scaling'].max(), df['color_scaling'].min()
     df['fill_color'] = df['color_scaling'].apply(lambda x: pseudocolor(x, min_pred, max_pred, BLACK, GREEN))
     progress_bar.progress(5/N_STEPS)
+
+
+st.header('Top 10 Predicted Demand Zones')
 
 with st.spinner(text="Generating NYC Map"):
 
