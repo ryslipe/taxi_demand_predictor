@@ -1,9 +1,12 @@
 name: hourly-taxi-demand-inference-pipeline
 
 on:
-  schedule:
-    - cron: '30 * * * *'
-  workflow_dispatch:
+    workflow_run:
+    # execute this action after feature-pipeline is completed
+      workflows: ["feature-pipeline"]
+      types:
+        - completed
+    workflow_dispatch:
 
 jobs:
   feature_pipeline:
