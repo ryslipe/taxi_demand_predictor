@@ -1,5 +1,5 @@
 import zipfile
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 
 import requests
@@ -14,8 +14,7 @@ import pydeck as pdk
 # modeling libraries
 from src.inference import(
     load_batch_of_features_from_store,
-    load_model_from_registry,
-    get_model_predictions
+    load_predictions_from_store
 )
 
 from src.paths import DATA_DIR
@@ -34,7 +33,7 @@ progress_bar = st.sidebar.header('⚙️ Working Progress')
 # start at no progress
 progress_bar = st.sidebar.progress(0)
 # useful when steps are completed
-N_STEPS = 7
+N_STEPS = 6
 
 
 
@@ -79,36 +78,38 @@ with st.spinner(text="Downloading shape file to plot taxi zones"):
 #st.write(geo_df)
 
 
-# connect to feature store for most recent batch of features
-with st.spinner(text='Fetching recent batch of data.'):
-    # loads a month of data up til last hour
-    features = load_batch_of_features_from_store(current_date)
-    
-    st.sidebar.write('✅ Features received.')
+with st.spinner(text="Fetching model predictions from the store"):
+    predictions_df = load_predictions_from_store(
+        from_pickup_hour=current_date - timedelta(hours=1),
+        to_pickup_hour=current_date
+    )
+    st.sidebar.write('✅ Model predictions arrived')
     progress_bar.progress(2/N_STEPS)
 
-#st.write('These are the current features')
-#st.write(features)
+# Here we are checking the predictions for the current hour have already been computed
+# and are available
+next_hour_predictions_ready = \
+    False if predictions_df[predictions_df.pickup_hour == current_date].empty else True
+prev_hour_predictions_ready = \
+    False if predictions_df[predictions_df.pickup_hour == (current_date - timedelta(hours=1))].empty else True
 
 
-# load the model from the model registry
-with st.spinner(text = 'Loading the model from model registry'):
-    model = load_model_from_registry()
-    st.sidebar.write('✅ The model has been loaded.')
-    progress_bar.progress(3/N_STEPS)
 
-#st.write('These are some details about how our model works.')
-#st.write(model)
+if next_hour_predictions_ready:
+    # predictions for the current hour are available
+    predictions_df = predictions_df[predictions_df.pickup_hour == current_date]
+
+elif prev_hour_predictions_ready:
+    # predictions for current hour are not available, so we use previous hour predictions
+    predictions_df = predictions_df[predictions_df.pickup_hour == (current_date - timedelta(hours=1))]
+    current_date = current_date - timedelta(hours=1)
+    st.subheader('⚠️ The most recent data is not yet available. Using last hour predictions')
+
+else:
+    raise Exception('Features are not available for the last 2 hours. Is your feature \
+                    pipeline up and running? 🤔')
 
 
-# get predictions
-with st.spinner(text = 'Generating model predictions'):
-    results = get_model_predictions(model, features)
-    st.sidebar.write('✅ Predictions have been generated.')
-    progress_bar.progress(4/N_STEPS)
-
-#st.write('Here are the predictions.')
-#st.write(results)
 
 with st.spinner(text="Preparing data to plot"):
 
@@ -123,7 +124,7 @@ with st.spinner(text="Preparing data to plot"):
         f = float(val-minval) / (maxval-minval)
         return tuple(f*(b-a)+a for (a, b) in zip(startcolor, stopcolor))
         
-    df = pd.merge(geo_df, results,
+    df = pd.merge(geo_df, predictions_df,
                   right_on='pickup_location_id',
                   left_on='LocationID',
                   how='inner')
@@ -175,6 +176,11 @@ with st.spinner(text="Generating NYC Map"):
     progress_bar.progress(6/N_STEPS)
 
 
+    with st.spinner(text="Fetching batch of features used in the last run"):
+        features_df = load_batch_of_features_from_store(current_date)
+        st.sidebar.write('✅ Inference features fetched from the store')
+        progress_bar.progress(5/N_STEPS)
+
     with st.spinner(text="Plotting time-series data"):
         predictions_df = df
         row_indices = np.argsort(predictions_df['predicted_demand'].values)[::-1]
@@ -186,10 +192,10 @@ with st.spinner(text="Generating NYC Map"):
             location_name = predictions_df['zone'].iloc[row_id]
             st.header(f'Location ID: {location_id} - {location_name}')
             fig = plot_one_sample(
-                features=features,
+                features=features_df,
                 targets=predictions_df['predicted_demand'],
                 example_id= row_id,
-                predictions= pd.Series(results['predicted_demand'])
+                predictions= pd.Series(predictions_df['predicted_demand'])
 
             )
             st.plotly_chart(fig, theme='streamlit', use_container_width=True, width=1000)

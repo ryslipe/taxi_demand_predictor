@@ -31,4 +31,8 @@ MODEL_NAME = 'taxi_demand_predictor_next_hour'
 MODEL_VERSION = 3
 
 FEATURE_GROUP_MODEL_PREDICTIONS = 'model_predictions_feature_group'
+FEATURE_GROUP_MODEL_VERSION = 1
+
+FEATURE_VIEW_PREDICTIONS = 'model_predictions_feature_view'
+FEATURE_VIEW_PREDICTIONS_VERSION = 1
 
