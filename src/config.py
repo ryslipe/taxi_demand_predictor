@@ -36,5 +36,5 @@ FEATURE_GROUP_MODEL_VERSION = 1
 FEATURE_VIEW_PREDICTIONS = 'model_predictions_feature_view'
 FEATURE_VIEW_PREDICTIONS_VERSION = 1
 
-MONITORING_FV_NAME = 'monitoring feature view'
+MONITORING_FV_NAME = 'monitoring_feature_view'
 MONITORING_FV_VERSION = 1
