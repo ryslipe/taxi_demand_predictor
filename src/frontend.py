@@ -77,9 +77,50 @@ with st.spinner(text="Downloading shape file to plot taxi zones"):
          #graphing the locations and getting the location name.')
 #st.write(geo_df)
 
+@st.cache_data
+def _load_batch_of_features_from_store(current_date: datetime) -> pd.DataFrame:
+    """Wrapped version of src.inference.load_batch_of_features_from_store, so
+    we can add Streamlit caching
+
+    Args:
+        current_date (datetime): _description_
+
+    Returns:
+        pd.DataFrame: n_features + 2 columns:
+            - `rides_previous_N_hour`
+            - `rides_previous_{N-1}_hour`
+            - ...
+            - `rides_previous_1_hour`
+            - `pickup_hour`
+            - `pickup_location_id`
+    """
+    return load_batch_of_features_from_store(current_date)
+
+@st.cache_data
+def _load_predictions_from_store(
+    from_pickup_hour: datetime,
+    to_pickup_hour: datetime
+    ) -> pd.DataFrame:
+    """
+    Wrapped version of src.inference.load_predictions_from_store, so we
+    can add Streamlit caching
+
+    Args:
+        from_pickup_hour (datetime): min datetime (rounded hour) for which we want to get
+        predictions
+
+        to_pickup_hour (datetime): max datetime (rounded hour) for which we want to get
+        predictions
+
+    Returns:
+        pd.DataFrame: 2 columns: pickup_location_id, predicted_demand
+    """
+    return load_predictions_from_store(from_pickup_hour, to_pickup_hour)
+
 
 with st.spinner(text="Fetching model predictions from the store"):
-    predictions_df = load_predictions_from_store(
+    # use cache version of the function to speed up load times
+    predictions_df = _load_predictions_from_store(
         from_pickup_hour=current_date - timedelta(hours=1),
         to_pickup_hour=current_date
     )
@@ -133,10 +174,9 @@ with st.spinner(text="Preparing data to plot"):
     df['color_scaling'] = df['predicted_demand']
     max_pred, min_pred = df['color_scaling'].max(), df['color_scaling'].min()
     df['fill_color'] = df['color_scaling'].apply(lambda x: pseudocolor(x, min_pred, max_pred, BLACK, GREEN))
-    progress_bar.progress(5/N_STEPS)
+    progress_bar.progress(3/N_STEPS)
 
 
-st.header('Top 10 Predicted Demand Zones')
 
 with st.spinner(text="Generating NYC Map"):
 
@@ -173,18 +213,20 @@ with st.spinner(text="Generating NYC Map"):
     )
 
     st.pydeck_chart(r)
-    progress_bar.progress(6/N_STEPS)
+    progress_bar.progress(4/N_STEPS)
 
 
     with st.spinner(text="Fetching batch of features used in the last run"):
-        features_df = load_batch_of_features_from_store(current_date)
+        features_df = _load_batch_of_features_from_store(current_date)
         st.sidebar.write('✅ Inference features fetched from the store')
         progress_bar.progress(5/N_STEPS)
 
     with st.spinner(text="Plotting time-series data"):
         predictions_df = df
+        # argsort uses ascending data so we use [::-1]
         row_indices = np.argsort(predictions_df['predicted_demand'].values)[::-1]
-        n_to_plot = 15
+        n_to_plot = 5
+        st.header('Top 5 Demand Zones')
 
         for row_id in row_indices[:n_to_plot]:
             # title
@@ -199,7 +241,10 @@ with st.spinner(text="Generating NYC Map"):
 
             )
             st.plotly_chart(fig, theme='streamlit', use_container_width=True, width=1000)
-        progress_bar.progress(7/N_STEPS)
+
+        
+        progress_bar.progress(6/N_STEPS)
+
 
 
         
