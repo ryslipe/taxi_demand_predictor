@@ -103,7 +103,7 @@ elif prev_hour_predictions_ready:
     # predictions for current hour are not available, so we use previous hour predictions
     predictions_df = predictions_df[predictions_df.pickup_hour == (current_date - timedelta(hours=1))]
     current_date = current_date - timedelta(hours=1)
-    st.subheader('⚠️ The most recent data is not yet available. Using last hour predictions')
+    st.subheader('⚠️ The most recent data is not yet available. Using predictions from the last hour.')
 
 else:
     raise Exception('Features are not available for the last 2 hours. Is your feature \
