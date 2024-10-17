@@ -81,6 +81,7 @@ def load_predictions_and_actuals_from_store(
     # time stamps
     from_ts = int(from_date.timestamp() * 1000)
     to_ts = int(to_date.timestamp() * 1000)
+    print(f'{from_ts}')
     # select all columns from predictions feature group and join on common columns then filter to our time frame
     query = predictions_fg.select_all() \
         .join(actuals_fg.select(['pickup_location_id', 'pickup_ts', 'rides']),
@@ -96,12 +97,9 @@ def load_predictions_and_actuals_from_store(
             version=config.MONITORING_FV_VERSION,
             query=query
         )
-    except Exception as e:
-        print(f'Failed to create feature view. Error: {e}')
-        if "already exists" in str(e):
-            print('Feature view already existed. Skip creation.')
-        else:
-            raise
+    except: 
+        print(f'Feature view already exists. Skipping creation.')
+       
     
     # feature view
     monitoring_fv = feature_store.get_feature_view(
@@ -109,19 +107,13 @@ def load_predictions_and_actuals_from_store(
         version=config.MONITORING_FV_VERSION
     )
 
-    # get batch of data
-    # fetch predicted and actual values 
     monitoring_df = monitoring_fv.get_batch_data(
-        start_time=from_date - timedelta(days=7),
-        end_time=to_date + timedelta(days=7),
+        
     )
-
-    # filter data to the time period we are interested in
-    pickup_ts_from = int(from_date.timestamp() * 1000)
-    pickup_ts_to = int(to_date.timestamp() * 1000)
-    monitoring_df = monitoring_df[monitoring_df.pickup_ts.between(pickup_ts_from, pickup_ts_to)]
-
+    
+    
     return monitoring_df
+
 
 
 

@@ -67,6 +67,7 @@ def load_shape_data_file() -> gpd.geodataframe.GeoDataFrame:
     # load and return shape file
     return gpd.read_file(DATA_DIR / 'taxi_zones/taxi_zones.shp').to_crs('epsg:4326')
 
+
 # call the funciton to store the shape file into a geo_df
 with st.spinner(text="Downloading shape file to plot taxi zones"):
     geo_df = load_shape_data_file()
@@ -216,12 +217,12 @@ with st.spinner(text="Generating NYC Map"):
     progress_bar.progress(4/N_STEPS)
 
 
-    with st.spinner(text="Fetching batch of features used in the last run"):
+with st.spinner(text="Fetching batch of features used in the last run"):
         features_df = _load_batch_of_features_from_store(current_date)
         st.sidebar.write('✅ Inference features fetched from the store')
         progress_bar.progress(5/N_STEPS)
 
-    with st.spinner(text="Plotting time-series data"):
+with st.spinner(text="Plotting time-series data"):
         predictions_df = df
         # argsort uses ascending data so we use [::-1]
         row_indices = np.argsort(predictions_df['predicted_demand'].values)[::-1]

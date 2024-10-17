@@ -49,9 +49,16 @@ with st.spinner(text="Fetching model predictions and actual values from the stor
         from_date=current_date - timedelta(days=14),
         to_date=current_date
     )
+    # see what we are working with 
+    from_date=current_date - timedelta(days=14),
+    to_date=current_date
+    st.write(f'{from_date=}')
+    st.write(f'{to_date=}')
+
     st.sidebar.write('✅ Model predictions and actual values arrived')
     progress_bar.progress(1/N_STEPS)
-    print(monitoring_df.head())
+    st.write(monitoring_df.sort_values(by='pickup_hour'))
+    st.write(len(monitoring_df))
 
 
 with st.spinner(text="Plotting aggregate MAE hour-by-hour"):
