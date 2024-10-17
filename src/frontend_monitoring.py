@@ -58,7 +58,7 @@ with st.spinner(text="Fetching model predictions and actual values from the stor
     st.sidebar.write('✅ Model predictions and actual values arrived')
     progress_bar.progress(1/N_STEPS)
     st.write(monitoring_df.sort_values(by='pickup_hour'))
-    st.write(len(monitoring_df))
+    st.write(f'Total predictions in time frame: {len(monitoring_df)}')
 
 
 with st.spinner(text="Plotting aggregate MAE hour-by-hour"):
@@ -119,3 +119,5 @@ with st.spinner(text="Plotting MAE hour-by-hour for top locations"):
         st.plotly_chart(fig, theme="streamlit", use_container_width=True, width=1000)
 
     progress_bar.progress(3/N_STEPS)
+
+   
