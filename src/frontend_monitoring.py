@@ -57,7 +57,7 @@ with st.spinner(text="Fetching model predictions and actual values from the stor
 
     st.sidebar.write('✅ Model predictions and actual values arrived')
     progress_bar.progress(1/N_STEPS)
-    st.write(monitoring_df.sort_values(by='pickup_hour'))
+    
     st.write(f'Total predictions in time frame: {len(monitoring_df)}')
 
 
