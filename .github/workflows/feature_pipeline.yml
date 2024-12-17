@@ -23,13 +23,15 @@ jobs:
 
     - name: Install Dependencies
       run: poetry install
-      if: steps.cache.outputs.cache-hit != 'true'
-     
+
+    - name: Debug Environment Variables
+      run: env
+
     - name: Execute python workflows from bash script
       env: 
         HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
-      run: poetry run jupyter nbconvert --to notebook --execute notebooks/12_feature_pipeline.ipynb
-
-
+        
+      run: |
+        poetry run jupyter nbconvert --to notebook --execute notebooks/12_feature_pipeline.ipynb
 
       

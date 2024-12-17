@@ -20,7 +20,7 @@ lightgbm = "^4.5.0"
 optuna = "^4.0.0"
 numpy = "1.26.4"
 python-dotenv = "^1.0.1"
-hopsworks = "^3.7.0"
+hopsworks = {extras = ["python"], version = "^4.1.2"}
 streamlit = "^1.38.0"
 geopandas = "^1.0.1"
 
